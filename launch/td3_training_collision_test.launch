@@ -1,0 +1,86 @@
+<launch>
+    <!-- TD3 Training Launch File (Collision Test Enabled) -->
+
+    <!-- Arguments -->
+    <arg name="rviz" default="false" />
+    <arg name="gazebo" default="false" />
+
+    <!-- Parameters -->
+    <param name="training_mode" value="true" />
+    <param name="model_path" value="/tmp/td3_model.pth" />
+    <param name="training_episodes" value="1000" />
+    <param name="episode_timeout" value="300" />
+    <param name="save_interval" value="100" />
+
+    <!-- Goal generator is invoked per-episode by training_launcher; not launched here -->
+
+    <!-- Reward Function (Collision Test Enabled) -->
+    <node name="reward_function" pkg="td3_rl_controller_high_buffer_size_respawn" type="reward_function.py" output="screen">
+        <param name="~distance_threshold" value="0.1" />
+        <param name="~angle_threshold" value="0.1" />
+        <param name="~collision_threshold" value="0.15" />
+        <param name="~max_velocity" value="1.0" />
+        <param name="~max_angular_velocity" value="1.0" />
+        <param name="~w_distance" value="1.0" />
+        <param name="~w_angle" value="0.5" />
+        <param name="~w_velocity" value="0.1" />
+        <param name="~w_collision" value="-100.0" />
+        <param name="~w_goal_reached" value="100.0" />
+        <param name="~w_time_penalty" value="-0.01" />
+        <param name="~odom_topic" value="/odom" />
+        <param name="~goal_topic" value="/move_base/goal" />
+        <param name="~lidar_topic" value="/scan" />
+        <!-- Enable forced collision testing in this launch only -->
+        <param name="~force_collision_test" value="true" />
+        <param name="~collision_test_step" value="200" />
+        <param name="~collision_test_interval" value="0" />
+    </node>
+
+    <!-- State Space Vector Builder (required to publish /rl_state) -->
+    <node name="state_builder" pkg="td3_rl_controller_high_buffer_size_respawn" type="statespace_vector.py" output="screen">
+        <param name="~lidar_topic" value="/scan" />
+        <param name="~imu_topic" value="/imu" />
+        <param name="~odom_topic" value="/odom" />
+        <param name="~goal_topic" value="/move_base/goal" />
+    </node>
+
+    <!-- TD3 Agent -->
+    <node name="td3_agent" pkg="td3_rl_controller_high_buffer_size_respawn" type="td3_agent.py" output="screen">
+        <param name="~state_dim" value="29" />
+        <param name="~action_dim" value="2" />
+        <param name="~max_action" value="0.22" />
+        <param name="~discount" value="0.99" />
+        <param name="~tau" value="0.005" />
+        <param name="~policy_noise" value="0.2" />
+        <param name="~policy_freq" value="2" />
+        <param name="~batch_size" value="1024" />
+        <param name="~warmup_steps" value="5000" />
+        <param name="~epsilon" value="1.0" />
+        <param name="~epsilon_decay" value="0.995" />
+        <param name="~epsilon_min" value="0.01" />
+    </node>
+
+    <!-- Training Launcher (per-episode goal trigger enabled) -->
+    <node name="training_launcher" pkg="td3_rl_controller_high_buffer_size_respawn" type="training_launcher.py" output="screen">
+        <param name="~training_episodes" value="1000" />
+        <param name="~episode_timeout" value="300" />
+        <param name="~save_interval" value="100" />
+        <param name="~respawn_wait_time" value="5.0" />
+        <param name="~episode_interval_sec" value="5.0" />
+    </node>
+
+    <!-- Optional: RViz for visualization -->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find td3_rl_controller_high_buffer_size)/config/td3_training.rviz" if="$(arg rviz)" />
+
+    <!-- Optional: Gazebo simulation -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch" if="$(arg gazebo)">
+        <arg name="world_name" value="$(find td3_rl_controller_high_buffer_size)/worlds/training_world.world" />
+        <arg name="paused" value="false" />
+        <arg name="use_sim_time" value="true" />
+        <arg name="gui" value="true" />
+        <arg name="headless" value="false" />
+        <arg name="debug" value="false" />
+    </include>
+
+</launch>
+

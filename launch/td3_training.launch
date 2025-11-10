@@ -1,0 +1,113 @@
+<launch>
+    <!-- TD3 Training Launch File -->
+    <!-- 
+    IMPORTANT: Launch your navigation stack separately with AMCL for localization.
+    This launch file only handles the TD3 training components.
+    
+    Example navigation launch:
+    roslaunch your_robot_navigation amcl_demo.launch
+    
+    Note: Disable move_base planners since TD3 will control the robot directly.
+    -->
+    
+    <!-- Arguments -->
+    <arg name="rviz" default="false" />
+    <arg name="gazebo" default="false" />
+    
+    <!-- Parameters -->
+    <param name="training_mode" value="true" />
+    <param name="model_path" value="/tmp/td3_model.pth" />
+    <param name="training_episodes" value="1000" />
+    <param name="episode_timeout" value="60" />
+    <param name="save_interval" value="100" />
+    
+    <!-- Localize robot before training starts -->
+    <node name="initialpose_publisher" pkg="td3_rl_controller_high_buffer_size_respawn" type="amcl_pose_publisher.py" output="screen">
+        <param name="~frame_id" value="map" />
+        <param name="~x" value="-2.000495" />
+        <param name="~y" value="-0.4975" />
+        <param name="~yaw" value="0.039" />
+    </node>
+
+    <!-- Goal generator is invoked per-episode by training_launcher; not launched here -->
+    
+    <!-- State Space Vector Builder -->
+    <node name="state_builder" pkg="td3_rl_controller_high_buffer_size_respawn" type="statespace_vector.py" output="screen">
+        <param name="~lidar_topic" value="/scan" />
+        <param name="~imu_topic" value="/imu" />
+        <param name="~odom_topic" value="/odom" />
+        <param name="~goal_topic" value="/move_base/goal" />
+    </node>
+    
+    <!-- Reward Function -->
+    <node name="reward_function" pkg="td3_rl_controller_high_buffer_size_respawn" type="reward_function.py" output="screen">
+        <param name="~distance_threshold" value="0.1" />
+        <param name="~angle_threshold" value="0.1" />
+        <param name="~collision_threshold" value="0.15" />
+        <param name="~max_velocity" value="1.0" />
+        <param name="~max_angular_velocity" value="1.0" />
+        <param name="~w_distance" value="1.0" />
+        <param name="~w_angle" value="0.5" />
+        <param name="~w_velocity" value="0.1" />
+        <param name="~w_collision" value="-100.0" />
+        <param name="~w_goal_reached" value="100.0" />
+        <param name="~w_time_penalty" value="-0.01" />
+        <param name="~odom_topic" value="/odom" />
+        <param name="~goal_topic" value="/move_base/goal" />
+        <param name="~lidar_topic" value="/scan" />
+        <!-- Collision Testing Parameters -->
+        <param name="~force_collision_test" value="false" />
+        <param name="~collision_test_step" value="200" />
+        <param name="~collision_test_interval" value="0" />
+    </node>
+    
+    <!-- TD3 Agent -->
+    <node name="td3_agent" pkg="td3_rl_controller_high_buffer_size_respawn" type="td3_agent.py" output="screen">
+        <param name="~state_dim" value="29" />
+        <param name="~action_dim" value="2" />
+        <param name="~max_action" value="0.22" />
+        <param name="~discount" value="0.99" />
+        <param name="~tau" value="0.005" />
+        <param name="~policy_noise" value="0.2" />
+        <param name="~policy_freq" value="2" />
+        <!-- Reduce batch size to allow earlier training while keeping buffer large -->
+        <param name="~batch_size" value="1024" />
+        <!-- Start training after at least this many transitions collected -->
+        <param name="~warmup_steps" value="5000" />
+        <param name="~epsilon" value="1.0" />
+        <param name="~epsilon_decay" value="0.995" />
+        <param name="~epsilon_min" value="0.01" />
+    </node>
+    
+    <!-- Training Launcher -->
+    <node name="training_launcher" pkg="td3_rl_controller_high_buffer_size_respawn" type="training_launcher.py" output="screen">
+        <param name="~training_episodes" value="1000" />
+        <param name="~episode_timeout" value="60" />
+        <param name="~save_interval" value="100" />
+        <param name="~respawn_wait_time" value="5.0" />
+    </node>
+
+    <!-- Persistent RViz box marker -->
+    <node name="box_marker" pkg="td3_rl_controller_high_buffer_size_respawn" type="box_marker.py" output="screen">
+        <param name="~frame_id" value="map" />
+        <param name="~v0" value="[1.01, 2.31]" />
+        <param name="~v1" value="[0.69, 2.31]" />
+        <param name="~v2" value="[0.69, 1.85]" />
+        <param name="~v3" value="[1.01, 1.85]" />
+    </node>
+    
+    
+    <!-- Optional: RViz for visualization -->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find td3_rl_controller_high_buffer_size)/config/td3_training.rviz" if="$(arg rviz)" />
+    
+    <!-- Optional: Gazebo simulation -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch" if="$(arg gazebo)">
+        <arg name="world_name" value="$(find td3_rl_controller_high_buffer_size)/worlds/training_world.world" />
+        <arg name="paused" value="false" />
+        <arg name="use_sim_time" value="true" />
+        <arg name="gui" value="true" />
+        <arg name="headless" value="false" />
+        <arg name="debug" value="false" />
+    </include>
+    
+</launch> 

@@ -1,0 +1,9 @@
+<launch>
+    <!-- Launch single_respawn.py once to move the robot to a safe random pose -->
+
+    <node name="single_respawn" pkg="td3_rl_controller_high_buffer_size_respawn" type="single_respawn.py" output="screen">
+        <!-- No params required; script auto-detects model and uses /map & Gazebo services -->
+    </node>
+
+</launch>
+

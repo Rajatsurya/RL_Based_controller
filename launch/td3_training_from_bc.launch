@@ -1,0 +1,66 @@
+<launch>
+    <!-- Start training using a pretrained model (from behavior cloning) -->
+    <arg name="model_path" default="/tmp/td3_model.pth" />
+
+    <!-- Localize robot before training starts -->
+    <node name="initialpose_publisher" pkg="td3_rl_controller_high_buffer_size_respawn" type="amcl_pose_publisher.py" output="screen">
+        <param name="~frame_id" value="map" />
+        <param name="~x" value="-2.000030" />
+        <param name="~y" value="-0.499938" />
+        <param name="~yaw" value="0.000966" />
+    </node>
+
+    <!-- State Space Vector Builder -->
+    <node name="state_builder" pkg="td3_rl_controller_high_buffer_size_respawn" type="statespace_vector.py" output="screen">
+        <param name="~lidar_topic" value="/scan" />
+        <param name="~imu_topic" value="/imu" />
+        <param name="~odom_topic" value="/odom" />
+        <param name="~simple_goal_topic" value="/move_base_simple/goal" />
+    </node>
+
+    <!-- Reward Function -->
+    <node name="reward_function" pkg="td3_rl_controller_high_buffer_size_respawn" type="reward_function.py" output="screen">
+        <param name="~distance_threshold" value="0.1" />
+        <param name="~angle_threshold" value="0.1" />
+        <param name="~collision_threshold" value="0.15" />
+        <param name="~max_velocity" value="1.0" />
+        <param name="~max_angular_velocity" value="1.0" />
+        <param name="~w_distance" value="1.0" />
+        <param name="~w_angle" value="0.5" />
+        <param name="~w_velocity" value="0.1" />
+        <param name="~w_collision" value="-100.0" />
+        <param name="~w_goal_reached" value="100.0" />
+        <param name="~w_time_penalty" value="-0.01" />
+        <param name="~odom_topic" value="/odom" />
+        <param name="~simple_goal_topic" value="/move_base_simple/goal" />
+        <param name="~lidar_topic" value="/scan" />
+    </node>
+
+    <!-- TD3 Agent (pretrained) -->
+    <node name="td3_agent" pkg="td3_rl_controller_high_buffer_size_respawn" type="td3_agent.py" output="screen">
+        <param name="~state_dim" value="29" />
+        <param name="~action_dim" value="2" />
+        <param name="~max_action" value="0.22" />
+        <param name="~discount" value="0.99" />
+        <param name="~tau" value="0.005" />
+        <param name="~policy_noise" value="0.2" />
+        <param name="~policy_freq" value="2" />
+        <param name="~batch_size" value="1024" />
+        <param name="~warmup_steps" value="5000" />
+        <param name="~epsilon" value="0.5" />
+        <param name="~epsilon_decay" value="0.998" />
+        <param name="~epsilon_min" value="0.01" />
+        <param name="~model_path" value="$(arg model_path)" />
+    </node>
+
+    <!-- Training Launcher -->
+    <node name="training_launcher" pkg="td3_rl_controller_high_buffer_size_respawn" type="training_launcher.py" output="screen">
+        <param name="~training_episodes" value="1000" />
+        <param name="~episode_timeout" value="60" />
+        <param name="~save_interval" value="100" />
+        <param name="~respawn_wait_time" value="5.0" />
+        <param name="~episode_interval_sec" value="5.0" />
+    </node>
+</launch>
+
+

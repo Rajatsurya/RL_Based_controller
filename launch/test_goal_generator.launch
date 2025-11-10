@@ -1,0 +1,22 @@
+<launch>
+    <!-- Test Goal Generator Launch File -->
+    <!-- This only launches the goal generator for testing purposes -->
+    
+    <!-- Goal Generator -->
+    <node name="goal_generator" pkg="td3_rl_controller_high_buffer_size_respawn" type="goal_generator.py" output="screen">
+        <param name="~goal_topic" value="/move_base/goal" />
+        <param name="~min_distance" value="0.5" />
+        <param name="~max_goals" value="50" />
+        <param name="~goal_timeout" value="5.0" />
+        <param name="~goal_reached_threshold" value="0.3" />
+        <param name="~goal_reached_delay" value="3.0" />
+        <param name="~use_map" value="true" />
+        <param name="~map_topic" value="/map" />
+        <param name="~free_max_value" value="0" />
+        <param name="~treat_unknown_as_free" value="false" />
+        <param name="~keepout_radius_m" value="0.15" />
+        <param name="~sample_retries" value="500" />
+        <param name="~use_odom_min_distance" value="true" />
+    </node>
+    
+</launch>

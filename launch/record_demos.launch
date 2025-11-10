@@ -1,0 +1,46 @@
+<launch>
+    <!-- Run demo recorder; drive the robot with teleop to collect data -->
+    <arg name="save_dir" default="$(find td3_rl_controller_high_buffer_size_respawn)/demos" />
+    <arg name="publish_goal" default="true" />
+    <arg name="publish_goal_to_move_base" default="true" />
+    <arg name="publish_goal_to_simple" default="true" />
+    <arg name="goal_x" default="-0.4" />
+    <arg name="goal_y" default="-0.4" />
+    <arg name="goal_yaw" default="0.039261" />
+    <arg name="publish_initialpose" default="true" />
+    <arg name="initialpose_x" default="-2.000030" />
+    <arg name="initialpose_y" default="-0.499938" />
+    <arg name="initialpose_z" default="0.0" />
+    <arg name="initialpose_roll" default="-0.000014" />
+    <arg name="initialpose_pitch" default="0.007706" />
+    <arg name="initialpose_yaw" default="0.000966" />
+    <node name="demo_recorder" pkg="td3_rl_controller_high_buffer_size_respawn" type="demo_recorder.py" output="screen">
+        <param name="~state_topic" value="/rl_state" />
+        <param name="~cmd_vel_topic" value="/cmd_vel" />
+        <param name="~save_dir" value="$(arg save_dir)" />
+        <param name="~min_samples" value="500" />
+        <param name="~max_samples" value="100000" />
+        <!-- Goal publishing so /rl_state contains goal-relative terms during demos -->
+        <param name="~publish_goal" value="$(arg publish_goal)" />
+        <param name="~publish_goal_to_move_base" value="$(arg publish_goal_to_move_base)" />
+        <param name="~publish_goal_to_simple" value="$(arg publish_goal_to_simple)" />
+        <param name="~goal_topic" value="/move_base/goal" />
+        <param name="~goal_simple_topic" value="/move_base_simple/goal" />
+        <param name="~goal_frame" value="map" />
+        <param name="~goal_x" value="$(arg goal_x)" />
+        <param name="~goal_y" value="$(arg goal_y)" />
+        <param name="~goal_yaw" value="$(arg goal_yaw)" />
+        <param name="~goal_repeats" value="3" />
+        <!-- Initial pose publishing for AMCL -->
+        <param name="~publish_initialpose" value="$(arg publish_initialpose)" />
+        <param name="~initialpose_frame" value="map" />
+        <param name="~initialpose_x" value="$(arg initialpose_x)" />
+        <param name="~initialpose_y" value="$(arg initialpose_y)" />
+        <param name="~initialpose_z" value="$(arg initialpose_z)" />
+        <param name="~initialpose_roll" value="$(arg initialpose_roll)" />
+        <param name="~initialpose_pitch" value="$(arg initialpose_pitch)" />
+        <param name="~initialpose_yaw" value="$(arg initialpose_yaw)" />
+    </node>
+</launch>
+
+

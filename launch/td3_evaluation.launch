@@ -1,0 +1,38 @@
+<launch>
+    <!-- TD3 Evaluation Launch File -->
+    
+    <!-- Parameters -->
+    <param name="training_mode" value="false" />
+    <param name="model_path" value="/tmp/td3_model.pth" />
+    
+    <!-- State Space Vector Builder -->
+    <node name="state_builder" pkg="td3_rl_controller" type="statespace_vector.py" output="screen">
+        <param name="~lidar_topic" value="/scan" />
+        <param name="~imu_topic" value="/imu" />
+        <param name="~odom_topic" value="/odom" />
+        <param name="~goal_topic" value="/move_base/goal" />
+    </node>
+    
+    <!-- TD3 Agent (Evaluation Mode) -->
+    <node name="td3_agent" pkg="td3_rl_controller_high_buffer_size_respawn" type="td3_agent.py" output="screen">
+        <param name="~state_dim" value="30" />
+        <param name="~action_dim" value="2" />
+        <param name="~max_action" value="0.22" />
+        <param name="~training_mode" value="false" />
+        <param name="~epsilon" value="0.0" />  <!-- No exploration in evaluation -->
+    </node>
+    
+    <!-- Optional: RViz for visualization -->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find td3_rl_controller)/config/td3_evaluation.rviz" if="$(arg rviz)" />
+    
+    <!-- Optional: Gazebo simulation -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch" if="$(arg gazebo)">
+        <arg name="world_name" value="$(find td3_rl_controller)/worlds/evaluation_world.world" />
+        <arg name="paused" value="false" />
+        <arg name="use_sim_time" value="true" />
+        <arg name="gui" value="true" />
+        <arg name="headless" value="false" />
+        <arg name="debug" value="false" />
+    </include>
+    
+</launch> 

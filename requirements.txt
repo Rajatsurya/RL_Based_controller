@@ -1,0 +1,9 @@
+torch>=1.9.0
+numpy>=1.19.0
+rospy
+sensor_msgs
+nav_msgs
+geometry_msgs
+std_msgs
+move_base_msgs
+tf 
