@@ -5,8 +5,8 @@
     <node name="bc_pretrain" pkg="td3_rl_controller_high_buffer_size_respawn" type="bc_pretrain.py" output="screen">
         <param name="~demos_dir" value="$(arg demos_dir)" />
         <param name="~model_path" value="$(arg model_path)" />
-        <param name="~epochs" value="10" />
-        <param name="~batch_size" value="512" />
+        <param name="~epochs" value="20" />
+        <param name="~batch_size" value="64" />
         <param name="~lr" value="0.0003" />
         <param name="~max_action" value="0.22" />
     </node>
