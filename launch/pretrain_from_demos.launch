@@ -9,6 +9,8 @@
         <param name="~batch_size" value="64" />
         <param name="~lr" value="0.0003" />
         <param name="~max_action" value="0.22" />
+        <param name="~filter_stopped" value="true" />  <!-- Filter out stopped samples -->
+        <param name="~velocity_threshold" value="0.01" />  <!-- Threshold for stopped detection -->
     </node>
 </launch>
 
