@@ -15,8 +15,8 @@ def send_goal():
     rospy.init_node("send_goal_node")
 
     # Hard-coded goal values
-    x = -0.4
-    y = -0.4
+    x = -1.89
+    y = -0.15
     yaw = 0.039261
 
     # Publisher and subscriber
