@@ -17,6 +17,16 @@
         <param name="~odom_topic" value="/odom" />
         <param name="~simple_goal_topic" value="/move_base_simple/goal" />
     </node>
+    <!-- Publish goal automatically (same as demo recording) -->
+    <node name="goal_publisher" pkg="td3_rl_controller_high_buffer_size_respawn" type="publish_goal_once_pretrain.py" output="screen">
+        <param name="~goal_x" value="-1.89" />
+        <param name="~goal_y" value="-0.15" />
+        <param name="~goal_yaw" value="0.039261" />
+        <param name="~goal_frame" value="map" />
+        <param name="~delay" value="3.0" />  <!-- Wait for state builder to initialize -->
+        <param name="~repeats" value="5" />
+    </node>
+
 
     <!-- TD3 Agent (EVALUATION MODE - No training, no exploration) -->
     <node name="td3_agent" pkg="td3_rl_controller_high_buffer_size_respawn" type="td3_agent.py" output="screen">
