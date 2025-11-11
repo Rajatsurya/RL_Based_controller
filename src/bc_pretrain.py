@@ -11,21 +11,53 @@ import rospy
 from td3_agent import Actor, Critic
 
 
-def load_demos(demos_dir):
+def load_demos(demos_dir, filter_stopped=True, velocity_threshold=0.01):
+    """
+    Load demonstration data from .npz files.
+
+    Args:
+        demos_dir: Directory containing .npz demo files
+        filter_stopped: If True, remove samples where robot is not moving
+        velocity_threshold: Threshold for filtering stopped samples
+    """
     files = sorted(glob.glob(os.path.join(demos_dir, '*.npz')))
     if not files:
         raise FileNotFoundError(f"No .npz demos found in {demos_dir}")
     states_list, actions_list = [], []
+    total_samples = 0
+    filtered_samples = 0
+
     for f in files:
         data = np.load(f)
         states = np.asarray(data['states'], dtype=np.float32)
         actions = np.asarray(data['actions'], dtype=np.float32)
         if states.ndim != 2 or actions.ndim != 2 or actions.shape[1] != 2:
             raise ValueError(f"Bad shapes in {f}: states {states.shape}, actions {actions.shape}")
+
+        total_samples += len(states)
+
+        # Filter out stopped samples (where both linear and angular velocities are near zero)
+        if filter_stopped:
+            linear_vel = np.abs(actions[:, 0])
+            angular_vel = np.abs(actions[:, 1])
+            # Keep samples where robot is actually moving
+            moving_mask = (linear_vel > velocity_threshold) | (angular_vel > velocity_threshold)
+            states = states[moving_mask]
+            actions = actions[moving_mask]
+            filtered_samples += moving_mask.sum()
+        else:
+            filtered_samples += len(states)
+
         states_list.append(states)
         actions_list.append(actions)
+
     X = np.concatenate(states_list, axis=0)
     Y = np.concatenate(actions_list, axis=0)
+
+    print(f"Loaded demos: {total_samples} total samples, {filtered_samples} after filtering ({100*filtered_samples/total_samples:.1f}%)")
+    if filter_stopped:
+        print(f"Filtered out {total_samples - filtered_samples} stopped samples ({100*(total_samples-filtered_samples)/total_samples:.1f}%)")
+
     return X, Y
 
 
@@ -35,11 +67,14 @@ class BehaviorCloningTrainer:
         self.demos_dir = rospy.get_param('~demos_dir', '/tmp/td3_demos')
         self.model_path = rospy.get_param('~model_path', '/tmp/td3_model.pth')
         self.epochs = int(rospy.get_param('~epochs', 10))
-        self.batch_size = int(rospy.get_param('~batch_size', 256))#this is too large 
+        self.batch_size = int(rospy.get_param('~batch_size', 256))#this is too large
         self.lr = float(rospy.get_param('~lr', 3e-4))
         self.max_action = float(rospy.get_param('~max_action', 0.22))
+        self.filter_stopped = bool(rospy.get_param('~filter_stopped', True))
+        self.velocity_threshold = float(rospy.get_param('~velocity_threshold', 0.01))
 
-        X, Y = load_demos(self.demos_dir)
+        rospy.loginfo(f"Loading demos with filter_stopped={self.filter_stopped}, velocity_threshold={self.velocity_threshold}")
+        X, Y = load_demos(self.demos_dir, filter_stopped=self.filter_stopped, velocity_threshold=self.velocity_threshold)
         state_dim = int(rospy.get_param('~state_dim', X.shape[1]))
         action_dim = int(rospy.get_param('~action_dim', 2))
 
@@ -92,5 +127,3 @@ if __name__ == '__main__':
         trainer.save()
     except Exception as e:
         rospy.logerr(f"BC pretrain failed: {e}")
-
-
