@@ -148,30 +148,39 @@ class TD3Agent:
     def state_callback(self, msg):
         """Callback for receiving state vector from statespace_vector.py"""
         self.current_state = np.array(msg.data)
-        
+
+        # TRAINING MODE: Full TD3 training with experience replay
         if self.training_mode and self.episode_active and not self.episode_done:
             # Get action from TD3
             action = self.select_action(self.current_state)
-            
+
             # Publish action
             self.publish_action(action)
-            
+
             # Store experience (will be completed when reward is received)
             if self.last_action is not None:
-                experience = (self.last_state, self.last_action, self.last_reward, 
+                experience = (self.last_state, self.last_action, self.last_reward,
                            self.current_state, False)  # done=False for now
                 self.replay_buffer.append(experience)
-                
+
                 # Train only after warmup and if enough samples for a batch
                 if len(self.replay_buffer) >= max(self.batch_size, self.warmup_steps):
                     self.train()
-            
+
             self.last_state = self.current_state.copy()
             self.last_action = action
             self.episode_steps += 1
             # Decay epsilon every step (independent of training), bounded by epsilon_min
             if self.epsilon > self.epsilon_min:
                 self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+
+        # EVALUATION MODE: Just run the actor policy (no training, no exploration)
+        elif not self.training_mode:
+            # Get action directly from actor (epsilon should be 0.0 in eval mode)
+            action = self.select_action(self.current_state)
+            # Publish action to control robot
+            self.publish_action(action)
+
         else:
             # Episode not active or done - stop robot
             self.stop_robot()
