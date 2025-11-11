@@ -6,6 +6,9 @@
         <param name="~demos_dir" value="$(arg demos_dir)" />
         <param name="~model_path" value="$(arg model_path)" />
         <param name="~epochs" value="40" />
+        <!-- original epoch was 10 -->
+        <param name="~epochs" value="20" /> 
+        <!-- original batch size was 512 -->
         <param name="~batch_size" value="64" />
         <param name="~lr" value="0.0003" />
         <param name="~max_action" value="0.22" />
@@ -13,5 +16,3 @@
         <param name="~velocity_threshold" value="0.01" />  <!-- Threshold for stopped detection -->
     </node>
 </launch>
-
-
