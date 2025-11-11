@@ -1,0 +1,30 @@
+<launch>
+    <!-- Test the BC pre-trained actor (before RL training) -->
+    <arg name="model_path" default="/tmp/td3_model.pth" />
+
+    <!-- Localize robot -->
+    <node name="initialpose_publisher" pkg="td3_rl_controller_high_buffer_size_respawn" type="amcl_pose_publisher.py" output="screen">
+        <param name="~frame_id" value="map" />
+        <param name="~x" value="-2.000030" />
+        <param name="~y" value="-0.499938" />
+        <param name="~yaw" value="0.000966" />
+    </node>
+
+    <!-- State Space Vector Builder -->
+    <node name="state_builder" pkg="td3_rl_controller_high_buffer_size_respawn" type="statespace_vector.py" output="screen">
+        <param name="~lidar_topic" value="/scan" />
+        <param name="~imu_topic" value="/imu" />
+        <param name="~odom_topic" value="/odom" />
+        <param name="~simple_goal_topic" value="/move_base_simple/goal" />
+    </node>
+
+    <!-- TD3 Agent (EVALUATION MODE - No training, no exploration) -->
+    <node name="td3_agent" pkg="td3_rl_controller_high_buffer_size_respawn" type="td3_agent.py" output="screen">
+        <param name="~state_dim" value="29" />
+        <param name="~action_dim" value="2" />
+        <param name="~max_action" value="0.22" />
+        <param name="~model_path" value="$(arg model_path)" />
+        <param name="~training_mode" value="false" />
+        <param name="~epsilon" value="0.0" />  <!-- NO exploration - pure actor policy -->
+    </node>
+</launch>
